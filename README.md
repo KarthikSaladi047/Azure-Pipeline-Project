@@ -24,8 +24,148 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 - The application will be deployed to the AKS cluster using Kubernetes manifests.
 
 ## 4. Pipeline Stages:
+```
+trigger:
+  branches:
+    include:
+    - master
 
+resources:
+  repositories:
+    - repository: self
+      type: github
+      name: <your-github-username>/<your-repository-name>
+      connection: <your-github-connection-name>
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: 'ACR_NAME'
+    value: '<your-acr-name>'
+  - name: 'ACR_LOGIN_SERVER'
+    value: '<your-acr-login-server>'
+  - name: 'ACR_USERNAME'
+    value: '<your-acr-username>'
+  - name: 'ACR_PASSWORD'
+    value: '<your-acr-password>'
+
+stages:
+- stage: Terraform
+  displayName: Terraform
+  jobs:
+  - job: Terraform
+    displayName: Terraform
+    steps:
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: '0.14.x'
+
+    - script: terraform init
+      displayName: 'Terraform Init'
+
+    - script: terraform apply -auto-approve
+      displayName: 'Terraform Apply'
+
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:
+    - task: Docker@2
+      displayName: 'Build an image'
+      inputs:
+        command: build
+        containerRegistry: $(ACR_NAME)
+        tags: |
+          <your-image-name>:$(Build.BuildId)
+        Dockerfile: '**/Dockerfile'
+
+- stage: Push
+  displayName: Push
+  jobs:
+  - job: Push
+    displayName: Push
+    steps:
+    - task: Docker@2
+      displayName: 'Push an image'
+      inputs:
+        command: push
+        containerRegistry: $(ACR_NAME)
+        tags: |
+          <your-image-name>:$(Build.BuildId)
+
+- stage: Deploy
+  displayName: Deploy
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    steps:
+    - task: KubernetesManifest@0
+      displayName: 'Deploy to AKS'
+      inputs:
+        command: 'apply'
+        manifests: |
+          k8s/*
+```
 - Terraform: In this stage, Terraform will be used to provision an AKS cluster in Azure.
+```
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "3.40.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  # Configuration options
+}
+//creating Azure Kubernetes service
+resource "azurerm_resource_group" "aks" {
+  name     = "my-aks-rg"
+  location = "East US"
+}
+
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = "my-aks-cluster"
+  location            = azurerm_resource_group.aks.location
+  resource_group_name = azurerm_resource_group.aks.name
+  dns_prefix          = "my-aks-cluster"
+  
+  kubernetes_version = "1.19.7"
+  
+  role_based_access_control {
+    enabled = true
+  }
+}
+// creating Azure container registry
+resource "azurerm_resource_group" "container_rg" {
+  name     = "acr-rg"
+  location = "East US"
+}
+
+resource "azurerm_container_registry" "acr" {
+  name                = "containerRegistry1"
+  resource_group_name = azurerm_resource_group.container_rg.name
+  location            = azurerm_resource_group.container_rg.location
+  sku                 = "Premium"
+  admin_enabled       = false
+  georeplications {
+    location                = "West Europe"
+    zone_redundancy_enabled = true
+    tags                    = {}
+  }
+  georeplications {
+    location                = "North Europe"
+    zone_redundancy_enabled = true
+    tags                    = {}
+  }
+}
+```
 - Build: In this stage, the application will be built and containerized using Docker.
 - Push: In this stage, the containerized application will be pushed to an Azure Container Registry.
 - Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
