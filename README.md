@@ -44,3 +44,11 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 - Monitor pipeline run and job status in GitHub.
 - Monitor the AKS cluster and application logs using Azure Monitor.
 
+## Summary
+This pipeline project has successfully implemented a CI/CD pipeline for a React JS application using Azure DevOps, Terraform, Docker and Kubernetes. The pipeline automates the building, testing, and deployment of the application to a Kubernetes cluster provisioned in Azure using Terraform. By implementing this pipeline, the development team can now focus on delivering new features and improvements, while the pipeline ensures that the application is always up-to-date and ready for production.
+
+## References:
+Azure DevOps documentation: https://docs.microsoft.com/en-us/azure/devops/
+Terraform documentation: https://www.terraform.io/docs/
+Docker documentation: https://docs.docker.com/
+Kubernetes documentation: https://kubernetes.io/docs/
