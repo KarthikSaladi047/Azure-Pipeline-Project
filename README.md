@@ -1,4 +1,4 @@
-# automation using Azure Pipeline
+# Automation using Azure Pipeline
 
 ## 1. Introduction:
 
@@ -22,8 +22,10 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 - The application will be built and containerized using Docker.
 - The containerized application will be pushed to an Azure Container Registry.
 - The application will be deployed to the AKS cluster using Kubernetes manifests.
+## 4. Pipeline Code
 
-## 4. Pipeline Stages:
+-- This is the azure-pipeline.yaml file.
+
 ```
 trigger:
   branches:
@@ -110,7 +112,12 @@ stages:
         manifests: |
           k8s/*
 ```
-- Terraform: In this stage, Terraform will be used to provision an AKS cluster in Azure.
+
+## 5. Pipeline Stages:
+
+- Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
+
+This is aks.tf file.
 ```
 terraform {
   required_providers {
@@ -124,6 +131,7 @@ terraform {
 provider "azurerm" {
   # Configuration options
 }
+
 //creating Azure Kubernetes service
 resource "azurerm_resource_group" "aks" {
   name     = "my-aks-rg"
@@ -142,6 +150,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     enabled = true
   }
 }
+
 // creating Azure container registry
 resource "azurerm_resource_group" "container_rg" {
   name     = "acr-rg"
@@ -179,7 +188,7 @@ resource "azurerm_container_registry" "acr" {
 - Store sensitive data like passwords and secrets in Azure DevOps secure variables.
 - Link your GitHub repository to your Azure DevOps organization and configure a webhook.
 
-## 6. Monitoring and troubleshooting:
+## 7. Monitoring and troubleshooting:
 - Monitor pipeline run and job logs in Azure DevOps.
 - Monitor pipeline run and job status in GitHub.
 - Monitor the AKS cluster and application logs using Azure Monitor.
@@ -188,7 +197,7 @@ resource "azurerm_container_registry" "acr" {
 This pipeline project has successfully implemented a CI/CD pipeline for a React JS application using Azure DevOps, Terraform, Docker and Kubernetes. The pipeline automates the building, testing, and deployment of the application to a Kubernetes cluster provisioned in Azure using Terraform. By implementing this pipeline, the development team can now focus on delivering new features and improvements, while the pipeline ensures that the application is always up-to-date and ready for production.
 
 ## References:
-Azure DevOps documentation: https://docs.microsoft.com/en-us/azure/devops/
-Terraform documentation: https://www.terraform.io/docs/
-Docker documentation: https://docs.docker.com/
-Kubernetes documentation: https://kubernetes.io/docs/
+-Azure DevOps documentation: https://docs.microsoft.com/en-us/azure/devops/
+-Terraform documentation: https://www.terraform.io/docs/
+-Docker documentation: https://docs.docker.com/
+-Kubernetes documentation: https://kubernetes.io/docs/
