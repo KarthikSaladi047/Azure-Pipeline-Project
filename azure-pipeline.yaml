@@ -1,0 +1,125 @@
+trigger:
+  branches:
+    include:
+    - master
+
+resources:
+  repositories:
+    - repository: self
+      type: github
+      name: KarthikSaladi047/Azure-Pipeline-Project
+      connection: github-connection
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: 'ACR_NAME'
+    value: $(ACR_NAME)
+  - name: 'AKS_CLUSTER_NAME'
+    value: $(aksName)
+  - name: 'RESOURCE_GROUP'
+    value: $(resourceGroup)
+
+  buildId: ''
+
+stages:
+- stage: Terraform
+  displayName: Terraform
+  jobs:
+  - job: Terraform
+    displayName: Terraform
+    steps:
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: '0.14.x'
+
+    - script: terraform init
+      displayName: 'Terraform Init'
+
+    - script: terraform apply -auto-approve
+      displayName: 'Terraform Apply'
+
+- stage: Build & Test React Application
+  displayName: Build & Test
+    jobs:
+    -  job: Build and Test
+       displayName: Build and Test
+       steps:
+       - script: |
+            npm install
+            npm run build
+         displayName: 'Build React App'
+
+       - script: npm test
+         displayName: 'Test React App'
+
+
+- stage: Build & Push Docker Image
+  displayName: Build & Push
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:
+    - task: Docker@2
+      displayName: 'Build an image'
+      inputs:
+        command: build
+        containerRegistry: $(ACR_NAME)
+        tags: |
+          react-app:$(Build.BuildId)
+        Dockerfile: '**/Dockerfile'
+
+    - task: AzureCLI@2
+      displayName: 'Login to ACR'
+      inputs:
+        azureSubscription: 'azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
+
+    - task: Docker@2
+      displayName: 'Push an image'
+      inputs:
+        command: push
+        containerRegistry: $(ACR_NAME)
+        tags: |
+          react-app:$(Build.BuildId)
+
+
+- stage: Replace Build Id
+  jobs:
+  - job: Build Id
+    steps:
+    - script: |
+        sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
+      name: ReplaceBuildId
+
+
+- stage: Deploy
+  displayName: Deploy
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Get AKS Credentials'
+      inputs:
+        azureSubscription: 'Azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az aks get-credentials -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME)
+
+    - script: |
+        az aks update -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME) --attach-acr my-registry
+      displayName: 'Configure AKS to use my-registry'
+
+    - task: KubernetesManifest@0
+      displayName: 'Deploy to AKS'
+      inputs:
+        command: 'apply'
+        manifests: |
+          k8s/*
