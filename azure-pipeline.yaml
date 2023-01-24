@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-    - master
+    - main
 
 resources:
   repositories:
@@ -14,14 +14,15 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  - name: 'ACR_NAME'
+  - name: ACR_NAME
     value: $(ACR_NAME)
-  - name: 'AKS_CLUSTER_NAME'
+  - name: AKS_CLUSTER_NAME
     value: $(aksName)
-  - name: 'RESOURCE_GROUP'
+  - name: RESOURCE_GROUP
     value: $(resourceGroup)
-
-  buildId: ''
+  - name: buildId
+    value: ''
+  
 
 stages:
 - stage: Terraform
@@ -43,17 +44,17 @@ stages:
 
 - stage: Build & Test React Application
   displayName: Build & Test
-    jobs:
-    -  job: Build and Test
-       displayName: Build and Test
-       steps:
-       - script: |
-            npm install
-            npm run build
-         displayName: 'Build React App'
+  jobs:
+  - job: Build and Test
+    displayName: Build and Test
+    steps:
+    - script: |
+        npm install
+        npm run build
+      displayName: 'Build React App'
 
-       - script: npm test
-         displayName: 'Test React App'
+    - script: npm test
+      displayName: 'Test React App'
 
 
 - stage: Build & Push Docker Image
