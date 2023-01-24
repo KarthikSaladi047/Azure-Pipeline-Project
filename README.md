@@ -227,7 +227,7 @@ This is Terraform Configuration file(aks.tf).
   ```
 
 - 3.Build & Push Docker Image: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
-  - Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
+   Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
 
   ```
   docker build -t myapp:$(Build.BuildId) .
