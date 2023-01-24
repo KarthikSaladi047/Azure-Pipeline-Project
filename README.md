@@ -17,7 +17,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 ## 3. Architecture:
 ![Developers](https://user-images.githubusercontent.com/105864615/214238240-1cc1fbec-9075-4a9d-ab99-2624e477d58e.jpg)
 - The pipeline will be triggered by a push to the `main` branch in GitHub.
-- The pipeline will include five stages: Terraform, Build & Test React Application, Build & Push Docker Image, Get, Set & Replace Build Id and Deploy.
+- The pipeline will include five stages: Terraform, Build & Test React Application, Build & Push Docker Image, Replace Build Id and Deploy.
 - Terraform will be used to provision an AKS cluster in Azure.
 - NPM is used to build and test application
 - The application will be built and containerized using Docker.
@@ -119,19 +119,14 @@ stages:
           react-app:$(Build.BuildId)
 
 
-- stage: Get, Set & Replace Build Id
+- stage: Replace Build Id
   jobs:
-  - job: Get & Set Build Id
+  - job: Build Id
     steps:
-    - script: echo "##vso[build.updatebuildnumber]$(date +%s)"
-      name: GetBuildId
-
-    - script: echo "##vso[task.setvariable variable=buildId]$(Build.BuildId)"
-      name: SetBuildId
-
     - script: |
-        sed -i "s/<build-id>/$(buildId)/g" deployment.yaml
+        sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
       name: ReplaceBuildId
+ 
  
 - stage: Deploy
   displayName: Deploy
@@ -163,9 +158,9 @@ stages:
 
 ## 5. Pipeline Stages:
 
-- Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
+- 1.Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
 
-This is aks.tf file.
+This is Terraform Configuration file(aks.tf).
 ```
 terraform {
   required_providers {
@@ -223,8 +218,18 @@ resource "azurerm_container_registry" "acr" {
   }
 }
 ```
-- Build: In this stage, the application will be built and containerized using Docker.
-- Push: In this stage, the containerized application will be pushed to an Azure Container Registry.
+- 2.Build & Test React Application: In this stage, the application is build and tested using NPM.
+```
+npm install
+npm run build
+npm test
+```
+- 3.Build & Push Docker Image: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
+```
+docker build
+docker push
+```
+- 4.Replace Build Id: In this stage, we modify the build id to use it as version tag for docker image
 - Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
 
 ## 5. Configuration:
