@@ -264,7 +264,7 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
               - name: NODE_ENV
                 value: "production"
   ```
-  - service.yaml
+  - k8s/service.yaml
   ```
   apiVersion: v1
   kind: Service
@@ -279,9 +279,9 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
       targetPort: 3000
     type: LoadBalancer
  ```
-  - ingress.yaml
+  - k8s/ingress.yaml
   ```
-  apiVersion: networking.k8s.io/v1
+   apiVersion: networking.k8s.io/v1
   kind: Ingress
   metadata:
     name: react-app
@@ -302,7 +302,6 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
   ```
 
 ## 5. Configuration:
-
 - As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
 - Configure Azure DevOps service connection to your Azure subscription.
 - Configure pipeline variables for Terraform, Docker and Kubernetes tasks.
