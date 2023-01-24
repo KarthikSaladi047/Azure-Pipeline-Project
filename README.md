@@ -230,14 +230,13 @@ npm test
 docker build -t myapp:$(Build.BuildId) .
 docker image tag myapp:$(Build.BuildId) my-registery.azurecr.io/myapp:$(Build.BuildId)
 docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
-
 ```
 - 4.Replace Build Id: In this stage, we execute a script task to replace the placeholder <build-id> in the deployment manifest file with the actual build ID, which is obtained from the $(Build.BuildId) variable.
 ```
   sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
 ```
 - 5.Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
-  kubernetes manifestes:
+
   - k8s/deployment.yaml
   ```
   apiVersion: apps/v1
@@ -265,6 +264,7 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
                 value: "production"
   ```
   - k8s/service.yaml
+  
   ```
   apiVersion: v1
   kind: Service
@@ -281,7 +281,7 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
  ```
   - k8s/ingress.yaml
   ```
-   apiVersion: networking.k8s.io/v1
+  apiVersion: networking.k8s.io/v1
   kind: Ingress
   metadata:
     name: react-app
@@ -300,7 +300,6 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
               port:
                 name: http
   ```
-
 ## 5. Configuration:
 - As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
 - Configure Azure DevOps service connection to your Azure subscription.
