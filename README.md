@@ -1,5 +1,5 @@
 # Automation using Azure Pipeline
-
+[![Build Status](https://dev.azure.com/karthiksaladiDevops/Azure-Pipeline-Project/_apis/build/status/KarthikSaladi047.Azure-Pipeline-Project?branchName=main)](https://dev.azure.com/karthiksaladiDevops/Azure-Pipeline-Project/_build/latest?definitionId=20&branchName=main)
 ## 1. Introduction:
 
 The purpose of this project is to implement a continuous integration/continuous delivery (CI/CD) pipeline for a React JS application using Azure DevOps, Terraform, Docker and Kubernetes. The pipeline will automate the building, testing, and deployment of the application to a Kubernetes cluster provisioned in Azure using Terraform.
