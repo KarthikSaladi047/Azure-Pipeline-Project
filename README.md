@@ -31,7 +31,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
     trigger:
       branches:
         include:
-        - master
+        - main
 
     resources:
       repositories:
