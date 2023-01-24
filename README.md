@@ -27,214 +27,220 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 - This is the azure-pipeline.yaml file.
 
-```
-trigger:
-  branches:
-    include:
-    - master
+    ```
+    trigger:
+      branches:
+        include:
+        - master
 
-resources:
-  repositories:
-    - repository: self
-      type: github
-      name: KarthikSaladi047/Azure-Pipeline-Project
-      connection: github-connection
+    resources:
+      repositories:
+        - repository: self
+          type: github
+          name: KarthikSaladi047/Azure-Pipeline-Project
+          connection: github-connection
 
-pool:
-  vmImage: 'ubuntu-latest'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-variables:
-  - name: 'ACR_NAME'
-    value: $(ACR_NAME)
-  - name: 'AKS_CLUSTER_NAME'
-    value: $(aksName)
-  - name: 'RESOURCE_GROUP'
-    value: $(resourceGroup)
+    variables:
+      - name: 'ACR_NAME'
+        value: $(ACR_NAME)
+      - name: 'AKS_CLUSTER_NAME'
+        value: $(aksName)
+      - name: 'RESOURCE_GROUP'
+        value: $(resourceGroup)
 
-  buildId: ''
+      buildId: ''
 
-stages:
-- stage: Terraform
-  displayName: Terraform
-  jobs:
-  - job: Terraform
-    displayName: Terraform
-    steps:
-    - task: TerraformInstaller@0
-      displayName: 'Install Terraform'
-      inputs:
-        terraformVersion: '0.14.x'
+    stages:
+    - stage: Terraform
+      displayName: Terraform
+      jobs:
+      - job: Terraform
+        displayName: Terraform
+        steps:
+        - task: TerraformInstaller@0
+          displayName: 'Install Terraform'
+          inputs:
+            terraformVersion: '0.14.x'
 
-    - script: terraform init
-      displayName: 'Terraform Init'
+        - script: terraform init
+          displayName: 'Terraform Init'
 
-    - script: terraform apply -auto-approve
-      displayName: 'Terraform Apply'
-      
-- stage: Build & Test React Application
-  displayName: Build & Test
-    jobs:
-    -  job: Build and Test
-       displayName: Build and Test
-       steps:
-       - script: |
-            npm install
-            npm run build
-         displayName: 'Build React App'
-         
-       - script: npm test
-         displayName: 'Test React App'
-            
+        - script: terraform apply -auto-approve
+          displayName: 'Terraform Apply'
 
-- stage: Build & Push Docker Image
-  displayName: Build & Push
-  jobs:
-  - job: Build
-    displayName: Build
-    steps:
-    - task: Docker@2
-      displayName: 'Build an image'
-      inputs:
-        command: build
-        containerRegistry: $(ACR_NAME)
-        tags: |
-          react-app:$(Build.BuildId)
-        Dockerfile: '**/Dockerfile'
+    - stage: Build & Test React Application
+      displayName: Build & Test
+        jobs:
+        -  job: Build and Test
+           displayName: Build and Test
+           steps:
+           - script: |
+                npm install
+                npm run build
+             displayName: 'Build React App'
 
-    - task: AzureCLI@2
-      displayName: 'Login to ACR'
-      inputs:
-        azureSubscription: 'azure-connection'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az acr login --name $(ACR_NAME)
-
-    - task: Docker@2
-      displayName: 'Push an image'
-      inputs:
-        command: push
-        containerRegistry: $(ACR_NAME)
-        tags: |
-          react-app:$(Build.BuildId)
+           - script: npm test
+             displayName: 'Test React App'
 
 
-- stage: Replace Build Id
-  jobs:
-  - job: Build Id
-    steps:
-    - script: |
-        sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
-      name: ReplaceBuildId
- 
- 
-- stage: Deploy
-  displayName: Deploy
-  jobs:
-  - job: Deploy
-    displayName: Deploy
-    steps:
-    - task: AzureCLI@2
-      displayName: 'Get AKS Credentials'
-      inputs:
-        azureSubscription: 'Azure-connection'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az aks get-credentials -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME)
+    - stage: Build & Push Docker Image
+      displayName: Build & Push
+      jobs:
+      - job: Build
+        displayName: Build
+        steps:
+        - task: Docker@2
+          displayName: 'Build an image'
+          inputs:
+            command: build
+            containerRegistry: $(ACR_NAME)
+            tags: |
+              react-app:$(Build.BuildId)
+            Dockerfile: '**/Dockerfile'
 
-    - script: |
-        az aks update -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME) --attach-acr my-registry
-      displayName: 'Configure AKS to use my-registry'
+        - task: AzureCLI@2
+          displayName: 'Login to ACR'
+          inputs:
+            azureSubscription: 'azure-connection'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              az acr login --name $(ACR_NAME)
 
-    - task: KubernetesManifest@0
-      displayName: 'Deploy to AKS'
-      inputs:
-        command: 'apply'
-        manifests: |
-          k8s/*
+        - task: Docker@2
+          displayName: 'Push an image'
+          inputs:
+            command: push
+            containerRegistry: $(ACR_NAME)
+            tags: |
+              react-app:$(Build.BuildId)
 
-```
+
+    - stage: Replace Build Id
+      jobs:
+      - job: Build Id
+        steps:
+        - script: |
+            sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
+          name: ReplaceBuildId
+
+
+    - stage: Deploy
+      displayName: Deploy
+      jobs:
+      - job: Deploy
+        displayName: Deploy
+        steps:
+        - task: AzureCLI@2
+          displayName: 'Get AKS Credentials'
+          inputs:
+            azureSubscription: 'Azure-connection'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              az aks get-credentials -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME)
+
+        - script: |
+            az aks update -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME) --attach-acr my-registry
+          displayName: 'Configure AKS to use my-registry'
+
+        - task: KubernetesManifest@0
+          displayName: 'Deploy to AKS'
+          inputs:
+            command: 'apply'
+            manifests: |
+              k8s/*
+
+    ```
 
 ## 5. Pipeline Stages:
 
 - 1.Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
 
 This is Terraform Configuration file(aks.tf).
-```
-terraform {
-  required_providers {
-    azurerm = {
-      source = "hashicorp/azurerm"
-      version = "3.40.0"
+    ```
+    terraform {
+      required_providers {
+        azurerm = {
+          source = "hashicorp/azurerm"
+          version = "3.40.0"
+        }
+      }
     }
-  }
-}
 
-provider "azurerm" {
-  # Configuration options
-}
+    provider "azurerm" {
+      # Configuration options
+    }
 
-//creating Azure Kubernetes service
-resource "azurerm_resource_group" "aks" {
-  name     = "my-aks-rg"
-  location = "East US"
-}
+    //creating Azure Kubernetes service
+    resource "azurerm_resource_group" "aks" {
+      name     = "my-aks-rg"
+      location = "East US"
+    }
 
-resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "my-aks-cluster"
-  location            = azurerm_resource_group.aks.location
-  resource_group_name = azurerm_resource_group.aks.name
-  dns_prefix          = "my-aks-cluster"
-  
-  kubernetes_version = "1.19.7"
-  
-  role_based_access_control {
-    enabled = true
-  }
-}
+    resource "azurerm_kubernetes_cluster" "aks" {
+      name                = "my-aks-cluster"
+      location            = azurerm_resource_group.aks.location
+      resource_group_name = azurerm_resource_group.aks.name
+      dns_prefix          = "my-aks-cluster"
 
-// creating Azure container registry
-resource "azurerm_resource_group" "container_rg" {
-  name     = "acr-rg"
-  location = "East US"
-}
+      kubernetes_version = "1.19.7"
 
-resource "azurerm_container_registry" "acr" {
-  name                = "my-registry"
-  resource_group_name = azurerm_resource_group.container_rg.name
-  location            = azurerm_resource_group.container_rg.location
-  sku                 = "Premium"
-  admin_enabled       = false
-  georeplications {
-    location                = "West Europe"
-    zone_redundancy_enabled = true
-    tags                    = {}
-  }
-  georeplications {
-    location                = "North Europe"
-    zone_redundancy_enabled = true
-    tags                    = {}
-  }
-}
-```
+      role_based_access_control {
+        enabled = true
+      }
+    }
+
+    // creating Azure container registry
+    resource "azurerm_resource_group" "container_rg" {
+      name     = "acr-rg"
+      location = "East US"
+    }
+
+    resource "azurerm_container_registry" "acr" {
+      name                = "my-registry"
+      resource_group_name = azurerm_resource_group.container_rg.name
+      location            = azurerm_resource_group.container_rg.location
+      sku                 = "Premium"
+      admin_enabled       = false
+      georeplications {
+        location                = "West Europe"
+        zone_redundancy_enabled = true
+        tags                    = {}
+      }
+      georeplications {
+        location                = "North Europe"
+        zone_redundancy_enabled = true
+        tags                    = {}
+      }
+    }
+    ```
 - 2.Build & Test React Application: In this stage, the application is build and tested using NPM.
-```
-npm install
-npm run build
-npm test
-```
+- 
+  ```
+  npm install
+  npm run build
+  npm test
+  ```
+
 - 3.Build & Push Docker Image: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
-   Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
-```
-docker build -t myapp:$(Build.BuildId) .
-docker image tag myapp:$(Build.BuildId) my-registery.azurecr.io/myapp:$(Build.BuildId)
-docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
-```
+  - Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
+
+  ```
+  docker build -t myapp:$(Build.BuildId) .
+  docker image tag myapp:$(Build.BuildId) my-registery.azurecr.io/myapp:$(Build.BuildId)
+  docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
+  ```
+  
 - 4.Replace Build Id: In this stage, we execute a script task to replace the placeholder <build-id> in the deployment manifest file with the actual build ID, which is obtained from the $(Build.BuildId) variable.
-```
-  sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
-```
+  
+  ```
+    sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
+  ```
+  
 - 5.Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
   
   The manifest files of the KubernetesManifest task  include all of the necessary configuration files for your React.js application to run on AKS,    such as the deployment file, service file, and ingress file. These files will define the resources and configurations needed for your application to run on AKS, such as the number of replicas, the container image, and the exposed ports.
@@ -265,8 +271,8 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
               - name: NODE_ENV
                 value: "production"
   ```
-    - k8s/service.yaml
   
+    - k8s/service.yaml
   ```
   apiVersion: v1
   kind: Service
@@ -281,8 +287,8 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
       targetPort: 3000
     type: LoadBalancer
   ```
-  - k8s/ingress.yaml
   
+  - k8s/ingress.yaml
   ```
   apiVersion: networking.k8s.io/v1
   kind: Ingress
