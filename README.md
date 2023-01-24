@@ -263,6 +263,44 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
               - name: NODE_ENV
                 value: "production"
   ```
+    - k8s/service.yaml
+  
+  ```
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: react-app
+  spec:
+    selector:
+      app: react-app
+    ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+    type: LoadBalancer
+ ```
+  - k8s/ingress.yaml
+  
+  ```
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: react-app
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+  spec:
+    rules:
+    - host: react-app.example.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: react-app
+              port:
+                name: http
+  ```
 
 ## 5. Configuration:
 - As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
