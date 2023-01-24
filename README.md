@@ -160,7 +160,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 - 1.Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
 
-This is Terraform Configuration file(aks.tf).
+    This is Terraform Configuration file(aks.tf).
     ```
     terraform {
       required_providers {
@@ -170,7 +170,7 @@ This is Terraform Configuration file(aks.tf).
         }
       }
     }
-
+    
     provider "azurerm" {
       # Configuration options
     }
