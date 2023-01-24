@@ -236,7 +236,9 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
   sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
 ```
 - 5.Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
-
+  
+  The manifest files of the KubernetesManifest task  include all of the necessary configuration files for your React.js application to run on AKS,    such as the deployment file, service file, and ingress file. These files will define the resources and configurations needed for your application to run on AKS, such as the number of replicas, the container image, and the exposed ports.
+  
   - k8s/deployment.yaml
   ```
   apiVersion: apps/v1
@@ -278,8 +280,9 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
       port: 3000
       targetPort: 3000
     type: LoadBalancer
- ```
+  ```
   - k8s/ingress.yaml
+  
   ```
   apiVersion: networking.k8s.io/v1
   kind: Ingress
@@ -299,7 +302,6 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
               name: react-app
               port:
                 name: http
-
   ```
 ## 5. Configuration:
 - As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
