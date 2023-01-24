@@ -241,65 +241,65 @@ docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
   - k8s/deployment.yaml
   ```
   apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: react-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: react-app
-  template:
-    metadata:
-      labels:
+  kind: Deployment
+  metadata:
+    name: react-app
+  spec:
+    replicas: 3
+    selector:
+      matchLabels:
         app: react-app
-    spec:
-      containers:
-        - name: react-app
-          image: my-registry.azurecr.io/react-app:<build-id>
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 3000
-          env:
-            - name: NODE_ENV
-              value: "production"
-```
+    template:
+      metadata:
+        labels:
+          app: react-app
+      spec:
+        containers:
+          - name: react-app
+            image: my-registry.azurecr.io/react-app:<build-id>
+            imagePullPolicy: Always
+            ports:
+              - containerPort: 3000
+            env:
+              - name: NODE_ENV
+                value: "production"
+  ```
   - service.yaml
   ```
   apiVersion: v1
-kind: Service
-metadata:
-  name: react-app
-spec:
-  selector:
-    app: react-app
-  ports:
-  - name: http
-    port: 3000
-    targetPort: 3000
-  type: LoadBalancer
-```
+  kind: Service
+  metadata:
+    name: react-app
+  spec:
+    selector:
+      app: react-app
+    ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+    type: LoadBalancer
+ ```
   - ingress.yaml
   ```
   apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: react-app
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  rules:
-  - host: react-app.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: react-app
-            port:
-              name: http
-```
+  kind: Ingress
+  metadata:
+    name: react-app
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+  spec:
+    rules:
+    - host: react-app.example.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: react-app
+              port:
+                name: http
+  ```
 
 ## 5. Configuration:
 
