@@ -219,7 +219,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
     }
     ```
 - 2.Build & Test React Application: In this stage, the application is build and tested using NPM.
-- 
+
   ```
   npm install
   npm run build
