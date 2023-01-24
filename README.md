@@ -44,13 +44,13 @@ pool:
 
 variables:
   - name: 'ACR_NAME'
-    value: '<your-acr-name>'
+    value: $(ACR_NAME)
   - name: 'ACR_LOGIN_SERVER'
-    value: '<your-acr-login-server>'
+    value: $(ACR_LOGIN_SERVER)
   - name: 'ACR_USERNAME'
-    value: '<your-acr-username>'
+    value: $(ACR_USERNAME)
   - name: 'ACR_PASSWORD'
-    value: '<your-acr-password>'
+    value: $(ACR_PASSWORD)
 
 stages:
 - stage: Terraform
@@ -69,7 +69,21 @@ stages:
 
     - script: terraform apply -auto-approve
       displayName: 'Terraform Apply'
-
+      
+- stage: Build and Test
+  displayName: Build and Test
+    jobs:
+    -  job: Build and Test
+       displayName: Build and Test
+       steps:
+       - script: |
+            npm install
+            npm run build
+         displayName: 'Build React App'
+         
+       - script: npm test
+         displayName: 'Test React App'
+            
 - stage: Build
   displayName: Build
   jobs:
