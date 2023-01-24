@@ -15,10 +15,11 @@ This project includes the following technologies and tools:
 The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 ## 3. Architecture:
-
+![Developers](https://user-images.githubusercontent.com/105864615/214238240-1cc1fbec-9075-4a9d-ab99-2624e477d58e.jpg)
 - The pipeline will be triggered by a push to the `main` branch in GitHub.
-- The pipeline will include four stages: Terraform, Build, Push, and Deploy.
+- The pipeline will include five stages: Terraform, Build & Test React Application, Build & Push Docker Image, Get, Set & Replace Build Id and Deploy.
 - Terraform will be used to provision an AKS cluster in Azure.
+- NPM is used to build and test application
 - The application will be built and containerized using Docker.
 - The containerized application will be pushed to an Azure Container Registry.
 - The application will be deployed to the AKS cluster using Kubernetes manifests.
@@ -45,18 +46,9 @@ pool:
 variables:
   - name: 'ACR_NAME'
     value: $(ACR_NAME)
-  - name: 'ACR_LOGIN_SERVER'
-    value: $(ACR_LOGIN_SERVER)
-  - name: 'ACR_USERNAME'
-    value: $(ACR_USERNAME)
-  - name: 'ACR_PASSWORD'
-    value: $(ACR_PASSWORD)
-
-  - name: 'aksName'
+  - name: 'AKS_CLUSTER_NAME'
     value: $(aksName)
-  - name: 'subscriptionId'
-    value: $(subscriptionId)
-  - name: 'resourceGroup'
+  - name: 'RESOURCE_GROUP'
     value: $(resourceGroup)
 
   buildId: ''
@@ -93,6 +85,7 @@ stages:
        - script: npm test
          displayName: 'Test React App'
             
+
 - stage: Build & Push Docker Image
   displayName: Build & Push
   jobs:
@@ -108,6 +101,15 @@ stages:
           react-app:$(Build.BuildId)
         Dockerfile: '**/Dockerfile'
 
+    - task: AzureCLI@2
+      displayName: 'Login to ACR'
+      inputs:
+        azureSubscription: 'azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
+
     - task: Docker@2
       displayName: 'Push an image'
       inputs:
@@ -116,7 +118,8 @@ stages:
         tags: |
           react-app:$(Build.BuildId)
 
-- stage: Get & Set Build Id
+
+- stage: Get, Set & Replace Build Id
   jobs:
   - job: Get & Set Build Id
     steps:
@@ -126,10 +129,6 @@ stages:
     - script: echo "##vso[task.setvariable variable=buildId]$(Build.BuildId)"
       name: SetBuildId
 
-- stage: Replace Build Id
-  jobs:
-  - job: Deploy
-    steps:
     - script: |
         sed -i "s/<build-id>/$(buildId)/g" deployment.yaml
       name: ReplaceBuildId
