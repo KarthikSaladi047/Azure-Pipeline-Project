@@ -36,8 +36,8 @@ resources:
   repositories:
     - repository: self
       type: github
-      name: <your-github-username>/<your-repository-name>
-      connection: <your-github-connection-name>
+      name: KarthikSaladi047/Azure-Pipeline-Project
+      connection: github-connection
 
 pool:
   vmImage: 'ubuntu-latest'
