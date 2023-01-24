@@ -225,18 +225,86 @@ npm run build
 npm test
 ```
 - 3.Build & Push Docker Image: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
+   Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
 ```
-docker build
-docker push
+docker build -t myapp:$(Build.BuildId) .
+docker image tag myapp:$(Build.BuildId) my-registery.azurecr.io/myapp:$(Build.BuildId)
+docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
+
 ```
-- 4.Replace Build Id: In this stage, we modify the build id to use it as version tag for docker image
-- Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
+- 4.Replace Build Id: In this stage, we execute a script task to replace the placeholder <build-id> in the deployment manifest file with the actual build ID, which is obtained from the $(Build.BuildId) variable.
+```
+  sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
+```
+- 5.Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
+  kubernetes manifestes:
+  - k8s/deployment.yaml
+  ```
+  apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: react-app
+  template:
+    metadata:
+      labels:
+        app: react-app
+    spec:
+      containers:
+        - name: react-app
+          image: my-registry.azurecr.io/react-app:<build-id>
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+```
+  - service.yaml
+  ```
+  apiVersion: v1
+kind: Service
+metadata:
+  name: react-app
+spec:
+  selector:
+    app: react-app
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  type: LoadBalancer
+```
+  - ingress.yaml
+  ```
+  apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: react-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: react-app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: react-app
+            port:
+              name: http
+```
 
 ## 5. Configuration:
 
-- Install Azure CLI and Terraform on the pipeline agent.
+- As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
 - Configure Azure DevOps service connection to your Azure subscription.
-- Create an Azure Container Registry and configure the pipeline to use it.
 - Configure pipeline variables for Terraform, Docker and Kubernetes tasks.
 - Store sensitive data like passwords and secrets in Azure DevOps secure variables.
 - Link your GitHub repository to your Azure DevOps organization and configure a webhook.
