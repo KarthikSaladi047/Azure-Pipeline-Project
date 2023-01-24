@@ -52,6 +52,15 @@ variables:
   - name: 'ACR_PASSWORD'
     value: $(ACR_PASSWORD)
 
+  - name: 'aksName'
+    value: $(aksName)
+  - name: 'subscriptionId'
+    value: $(subscriptionId)
+  - name: 'resourceGroup'
+    value: $(resourceGroup)
+
+  buildId: ''
+
 stages:
 - stage: Terraform
   displayName: Terraform
@@ -70,8 +79,8 @@ stages:
     - script: terraform apply -auto-approve
       displayName: 'Terraform Apply'
       
-- stage: Build and Test
-  displayName: Build and Test
+- stage: Build & Test React Application
+  displayName: Build & Test
     jobs:
     -  job: Build and Test
        displayName: Build and Test
@@ -84,8 +93,8 @@ stages:
        - script: npm test
          displayName: 'Test React App'
             
-- stage: Build
-  displayName: Build
+- stage: Build & Push Docker Image
+  displayName: Build & Push
   jobs:
   - job: Build
     displayName: Build
@@ -96,35 +105,61 @@ stages:
         command: build
         containerRegistry: $(ACR_NAME)
         tags: |
-          <your-image-name>:$(Build.BuildId)
+          react-app:$(Build.BuildId)
         Dockerfile: '**/Dockerfile'
 
-- stage: Push
-  displayName: Push
-  jobs:
-  - job: Push
-    displayName: Push
-    steps:
     - task: Docker@2
       displayName: 'Push an image'
       inputs:
         command: push
         containerRegistry: $(ACR_NAME)
         tags: |
-          <your-image-name>:$(Build.BuildId)
+          react-app:$(Build.BuildId)
 
+- stage: Get & Set Build Id
+  jobs:
+  - job: Get & Set Build Id
+    steps:
+    - script: echo "##vso[build.updatebuildnumber]$(date +%s)"
+      name: GetBuildId
+
+    - script: echo "##vso[task.setvariable variable=buildId]$(Build.BuildId)"
+      name: SetBuildId
+
+- stage: Replace Build Id
+  jobs:
+  - job: Deploy
+    steps:
+    - script: |
+        sed -i "s/<build-id>/$(buildId)/g" deployment.yaml
+      name: ReplaceBuildId
+ 
 - stage: Deploy
   displayName: Deploy
   jobs:
   - job: Deploy
     displayName: Deploy
     steps:
+    - task: AzureCLI@2
+      displayName: 'Get AKS Credentials'
+      inputs:
+        azureSubscription: 'Azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az aks get-credentials -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME)
+
+    - script: |
+        az aks update -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME) --attach-acr my-registry
+      displayName: 'Configure AKS to use my-registry'
+
     - task: KubernetesManifest@0
       displayName: 'Deploy to AKS'
       inputs:
         command: 'apply'
         manifests: |
           k8s/*
+
 ```
 
 ## 5. Pipeline Stages:
@@ -172,7 +207,7 @@ resource "azurerm_resource_group" "container_rg" {
 }
 
 resource "azurerm_container_registry" "acr" {
-  name                = "containerRegistry1"
+  name                = "my-registry"
   resource_group_name = azurerm_resource_group.container_rg.name
   location            = azurerm_resource_group.container_rg.location
   sku                 = "Premium"
