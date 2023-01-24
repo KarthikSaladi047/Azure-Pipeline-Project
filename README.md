@@ -156,6 +156,16 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
     ```
 
+- The Terraform stage runs terraform commands to initialize and apply a Terraform configuration.
+
+- The Build & Test React Application stage runs npm commands to install dependencies, build the React application and run tests.
+
+- The Build & Push Docker Image stage uses the Docker task to build and push a Docker image of the React application to an Azure Container Registry (ACR).
+
+- The Replace Build Id stage uses a bash script to replace a placeholder in a deployment file with the build id.
+
+- The Deploy stage uses Azure CLI task to get AKS credentials and configure AKS to use a registry, then deploys the application to the AKS cluster using KubernetesManifest task.
+
 ## 5. Pipeline Stages:
 
 - 1.Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
