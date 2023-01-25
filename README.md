@@ -254,7 +254,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
   
 - 5. Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
   
-  The manifest files of the KubernetesManifest task  include all of the necessary configuration files for your React.js application to run on AKS,    such as the deployment file, service file, and ingress file. These files will define the resources and configurations needed for your application to run on AKS, such as the number of replicas, the container image, and the exposed ports.
+  The manifest files of the KubernetesManifest task  include all of the necessary configuration files for the React.js application to run on AKS,    such as the deployment file, service file, and ingress file. These files will define the resources and configurations needed for the application to run on AKS, such as the number of replicas, the container image, and the exposed ports.
   
   - k8s/deployment.yaml
   ```
@@ -321,11 +321,11 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
                 name: http
   ```
 ## 5. Configuration:
+- Link your GitHub repository to your Azure DevOps organization and configure a webhook.
 - As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
 - Configure Azure DevOps service connection to your Azure subscription.
 - Configure pipeline variables for Terraform, Docker and Kubernetes tasks and before doing this install required plugins from Visual Studio Market Place.
 - Store sensitive data like passwords and secrets in Azure DevOps secure variables.
-- Link your GitHub repository to your Azure DevOps organization and configure a webhook.
 
 ## 7. Monitoring and troubleshooting:
 - Monitor pipeline run and job logs in Azure DevOps.
