@@ -323,7 +323,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 ## 5. Configuration:
 - As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
 - Configure Azure DevOps service connection to your Azure subscription.
-- Configure pipeline variables for Terraform, Docker and Kubernetes tasks.
+- Configure pipeline variables for Terraform, Docker and Kubernetes tasks and before doing this install required plugins from Visual Studio Market Place.
 - Store sensitive data like passwords and secrets in Azure DevOps secure variables.
 - Link your GitHub repository to your Azure DevOps organization and configure a webhook.
 
