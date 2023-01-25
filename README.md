@@ -169,7 +169,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 ## 5. Pipeline Stages:
 
-- 1.Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
+- 1. Terraform: In this stage, Terraform will be used to provision an AKS cluster and Azure Container Registry in Azure.
 
     This is Terraform Configuration file(aks.tf).
     ```
@@ -229,7 +229,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
       }
     }
     ```
-- 2.Build & Test React Application: In this stage, the application is build and tested using NPM.
+- 2. Build & Test React Application: In this stage, the application is build and tested using NPM.
 
   ```
   npm install
@@ -237,7 +237,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
   npm test
   ```
 
-- 3.Build & Push Docker Image: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
+- 3. Build & Push Docker Image: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
    Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
 
   ```
@@ -246,13 +246,13 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
   docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
   ```
   
-- 4.Replace Build Id: In this stage, we execute a script task to replace the placeholder <build-id> in the deployment manifest file with the actual build ID, which is obtained from the $(Build.BuildId) variable.
+- 4. Replace Build Id: In this stage, we execute a script task to replace the placeholder <build-id> in the deployment manifest file with the actual build ID, which is obtained from the $(Build.BuildId) variable.
   
   ```
     sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
   ```
   
-- 5.Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
+- 5. Deploy: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
   
   The manifest files of the KubernetesManifest task  include all of the necessary configuration files for your React.js application to run on AKS,    such as the deployment file, service file, and ingress file. These files will define the resources and configurations needed for your application to run on AKS, such as the number of replicas, the container image, and the exposed ports.
   
