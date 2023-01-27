@@ -27,133 +27,135 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 - This is the azure-pipeline.yaml file.
 
-    ```
-    trigger:
-      branches:
-        include:
-        - main
+```
+trigger:
+  branches:
+    include:
+    - main
 
-    resources:
-      repositories:
-        - repository: self
-          type: github
-          name: KarthikSaladi047/Azure-Pipeline-Project
-          connection: github-connection
+resources:
+  repositories:
+    - repository: self
+      type: github
+      name: KarthikSaladi047/Azure-Pipeline-Project
+      connection: github-connection
 
-    pool:
-      vmImage: 'ubuntu-latest'
+pool:
+  vmImage: 'ubuntu-latest'
 
-    variables:
-      - name: ACR_NAME
-        value: $(ACR_NAME)
-      - name: AKS_CLUSTER_NAME
-        value: $(aksName)
-      - name: RESOURCE_GROUP
-        value: $(resourceGroup)
-      - name: buildId
-        value: ''
-
-
-    stages:
-    - stage: Terraform
-      displayName: Terraform
-      jobs:
-      - job: Terraform
-        displayName: Terraform
-        steps:
-        - task: TerraformInstaller@0
-          displayName: 'Install Terraform'
-          inputs:
-            terraformVersion: '0.14.x'
-
-        - script: terraform init
-          displayName: 'Terraform Init'
-
-        - script: terraform apply -auto-approve
-          displayName: 'Terraform Apply'
-
-    - stage: Build & Test React Application
-      displayName: Build & Test
-      jobs:
-      - job: Build and Test
-        displayName: Build and Test
-        steps:
-        - script: |
-            npm install
-            npm run build
-          displayName: 'Build React App'
-
-        - script: npm test
-          displayName: 'Test React App'
+variables:
+  - name: ACR_NAME
+    value: $(ACR_NAME)
+  - name: AKS_CLUSTER_NAME
+    value: $(aksName)
+  - name: RESOURCE_GROUP
+    value: $(resourceGroup)
+  - name: buildId
+    value: ''
 
 
-    - stage: Build & Push Docker Image
-      displayName: Build & Push
-      jobs:
-      - job: Build
-        displayName: Build
-        steps:
-        - task: Docker@2
-          displayName: 'Build an image'
-          inputs:
-            command: build
-            containerRegistry: $(ACR_NAME)
-            tags: |
-              react-app:$(Build.BuildId)
-            Dockerfile: '**/Dockerfile'
+stages:
+- stage: Terraform
+  displayName: Terraform
+  jobs:
+  - job: Terraform
+    displayName: Terraform
+    steps:
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: '0.14.x'
 
-        - task: AzureCLI@2
-          displayName: 'Login to ACR'
-          inputs:
-            azureSubscription: 'azure-connection'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              az acr login --name $(ACR_NAME)
+    - script: terraform init
+      displayName: 'Terraform Init'
 
-        - task: Docker@2
-          displayName: 'Push an image'
-          inputs:
-            command: push
-            containerRegistry: $(ACR_NAME)
-            tags: |
-              react-app:$(Build.BuildId)
+    - script: terraform apply -auto-approve
+      displayName: 'Terraform Apply'
 
+- stage: Build & Test React Application
+  displayName: Build & Test
+  jobs:
+  - job: Build and Test
+    displayName: Build and Test
+    steps:
+    - script: |
+        npm install
+        npm run build
+      displayName: 'Build React App'
 
-    - stage: Replace Build Id
-      jobs:
-      - job: Build Id
-        steps:
-        - script: |
-            sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
-          name: ReplaceBuildId
+    - script: npm test
+      displayName: 'Test React App'
 
 
-    - stage: Deploy
-      displayName: Deploy
-      jobs:
-      - job: Deploy
-        displayName: Deploy
-        steps:
-        - task: AzureCLI@2
-          displayName: 'Get AKS Credentials'
-          inputs:
-            azureSubscription: 'Azure-connection'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              az aks get-credentials -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME)
+- stage: Build & Push Docker Image
+  displayName: Build & Push
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:
+    - task: Docker@2
+      displayName: 'Build an image'
+      inputs:
+        command: build
+        containerRegistry: $(ACR_NAME)
+        tags: |
+          react-app:$(Build.BuildId)
+        Dockerfile: '**/Dockerfile'
 
-        - script: |
-            az aks update -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME) --attach-acr my-registry
-          displayName: 'Configure AKS to use my-registry'
+    - task: AzureCLI@2
+      displayName: 'Login to ACR'
+      inputs:
+        azureSubscription: 'azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
 
-        - script: |
-            kubectl apply -f k8s/*
-          displayName: 'Apply the manifests to AKS cluster'
+    - task: Docker@2
+      displayName: 'Push an image'
+      inputs:
+        command: push
+        containerRegistry: $(ACR_NAME)
+        tags: |
+          react-app:$(Build.BuildId)
 
-    ```
 
+- stage: Replace Build Id
+  jobs:
+  - job: Build Id
+    steps:
+    - script: |
+        sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
+      name: ReplaceBuildId
+
+
+- stage: Deploy
+  displayName: Deploy
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Get AKS Credentials'
+      inputs:
+        azureSubscription: 'Azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az aks get-credentials -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME)
+
+    - script: |
+        az aks update -g $(RESOURCE_GROUP) -n $(AKS_CLUSTER_NAME) --attach-acr my-registry
+      displayName: 'Configure AKS to use my-registry'
+
+    - script: |
+        kubectl apply -f k8s/*
+      displayName: 'Apply manifestes to AKS cluster'
+
+    - script: |
+       helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+      displayName: 'Install Nginx Ingress Controller using helm'
+```
 - The Terraform stage runs terraform commands to initialize and apply a Terraform configuration.
 
 - The Build & Test React Application stage runs npm commands to install dependencies, build the React application and run tests.
@@ -162,7 +164,7 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 - The Replace Build Id stage uses a bash script to replace a placeholder in a deployment file with the build id.
 
-- The Deploy stage uses Azure CLI task to get AKS credentials and configure AKS to use a registry, then deploys the application to the AKS cluster using a kubectl apply command.
+- The Deploy stage uses Azure CLI task to get AKS credentials and configure AKS to use a registry, then deploys the application to the AKS cluster using a kubectl apply command and install a Nginx ingress controller using helm.
 
 ## 5. Pipeline Stages:
 
@@ -280,45 +282,44 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
   ```
   
   - k8s/service.yaml
-  ```
-  apiVersion: v1
-  kind: Service
-  metadata:
-    name: react-app
-  spec:
-    selector:
-      app: react-app
-    ports:
-    - name: http
-      port: 3000
-      targetPort: 3000
-    type: LoadBalancer
-  ```
+    ```
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: react-app
+    spec:
+      selector:
+        app: react-app
+      ports:
+      - name: http
+        port: 3000
+        targetPort: 3000
+    ```
   
   - k8s/ingress.yaml
-  ```
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    name: react-app
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-  spec:
-    rules:
-    - host: react-app.example.com
-      http:
-        paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: react-app
-              port:
-                name: http
-  ```
+    ```
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: react-app
+    spec:
+      ingressClassName: nginx
+      rules:
+      - host: react-app.example.com
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: react-app
+                port:
+                  name: http
+    ```
+    
 ## 5. Configuration:
 - Link your GitHub repository to your Azure DevOps organization and configure a webhook.
-- As we are using Microsoft hosted agent, Azure CLI, Docker and Terraform are pre-installed on the pipeline agent.
+- As we are using Microsoft hosted agent, Azure CLI, Docker, kubectl, helm and Terraform are pre-installed on the pipeline agent.
 - Configure Azure DevOps service connection to your Azure subscription.
 - Configure pipeline variables for Terraform, Docker and Kubernetes tasks and before doing this install required plugins from Visual Studio Market Place.
 - Store sensitive data like passwords and secrets in Azure DevOps secure variables.
@@ -327,6 +328,13 @@ The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 - Monitor pipeline run and job logs in Azure DevOps.
 - Monitor pipeline run and job status in GitHub.
 - Monitor the AKS cluster and application logs using Azure Monitor.
+- verify the ingress controller setup
+    ```
+    nano /etc/host
+    //add
+    <load-balancer-ip> react-app.example.com
+    curl react-app.example.com
+    ```
 
 ## Summary
 This pipeline project has successfully implemented a CI/CD pipeline for a React JS application using Azure DevOps, Terraform, Docker and Kubernetes. The pipeline automates the building, testing, and deployment of the application to a Kubernetes cluster provisioned in Azure using Terraform. By implementing this pipeline, the development team can now focus on delivering new features and improvements, while the pipeline ensures that the application is always up-to-date and ready for production.
