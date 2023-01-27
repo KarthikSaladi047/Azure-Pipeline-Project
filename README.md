@@ -230,56 +230,56 @@ stages:
     ```
  2. **Build & Test React Application**: In this stage, the application is build and tested using NPM.
 
-  ```
-  npm install
-  npm run build
-  npm test
-  ```
+    ```
+    npm install
+    npm run build
+    npm test
+    ```
 
  3. **Build & Push Docker Image**: In this stage, the application will be built and containerized using Docker then the containerized application will be pushed to an Azure Container Registry.
    Here we build a Docker image using the Dockerfile in the repository, and tags the image with myapp:$(Build.BuildId)
 
-  ```
-  docker build -t myapp:$(Build.BuildId) .
-  docker image tag myapp:$(Build.BuildId) my-registery.azurecr.io/myapp:$(Build.BuildId)
-  docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
-  ```
+    ```
+    docker build -t myapp:$(Build.BuildId) .
+    docker image tag myapp:$(Build.BuildId) my-registery.azurecr.io/myapp:$(Build.BuildId)
+    docker image push my-registery.azurecr.io/myapp:$(Build.BuildId)
+    ```
   
  4. **Replace Build Id**: In this stage, we execute a script task to replace the placeholder <build-id> in the deployment manifest file with the actual build ID, which is obtained from the $(Build.BuildId) variable.
     
-  ```
-    sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
-  ```
+    ```
+      sed -i "s/<build-id>/$(Build.BuildId)/g" deployment.yaml
+    ```
  5. **Deploy**: In this stage, the application will be deployed to the AKS cluster using Kubernetes manifests.
     
     The manifest files of the KubernetesManifest task  include all of the necessary configuration files for the React.js application to run on AKS,    such as the deployment file, service file, and ingress file. These files will define the resources and configurations needed for the application to run on AKS, such as the number of replicas, the container image, and the exposed ports.
   
   - k8s/deployment.yaml
-  ```
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: react-app
-  spec:
-    replicas: 3
-    selector:
-      matchLabels:
-        app: react-app
-    template:
-      metadata:
-        labels:
+    ```
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: react-app
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
           app: react-app
-      spec:
-        containers:
-          - name: react-app
-            image: my-registry.azurecr.io/react-app:<build-id>
-            imagePullPolicy: Always
-            ports:
-              - containerPort: 3000
-            env:
-              - name: NODE_ENV
-                value: "production"
-  ```
+      template:
+        metadata:
+          labels:
+            app: react-app
+        spec:
+          containers:
+            - name: react-app
+              image: my-registry.azurecr.io/react-app:<build-id>
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 3000
+              env:
+                - name: NODE_ENV
+                  value: "production"
+    ```
   
   - k8s/service.yaml
     ```
