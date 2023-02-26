@@ -1,4 +1,4 @@
-# Automation using Azure Pipeline <img src="https://github.com/InathiM/azure-icons/blob/main/Azure_Public_Service_Icons/devops/10261-icon-service-Azure-DevOps.svg" title="azure-devops" alt="azure-devops" width="40" height="40"/>
+# Automation using Azure Pipeline <img src="https://th.bing.com/th/id/OIP.W-XvzYCLmdn45FqwnVpCYgHaHa?pid=ImgDet&rs=1" title="azure-pipeline" alt="azure-pipeline" width="40" height="40"/>
 [![Build Status](https://dev.azure.com/karthiksaladiDevops/Azure-Pipeline-Project/_apis/build/status/KarthikSaladi047.Azure-Pipeline-Project?branchName=main)](https://dev.azure.com/karthiksaladiDevops/Azure-Pipeline-Project/_build/latest?definitionId=21&branchName=main)
 ## 1. Introduction:
 
