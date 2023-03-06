@@ -15,7 +15,7 @@ This project includes the following technologies and tools:
 The project will be deployed in an Azure Kubernetes Service (AKS) cluster.
 
 ## 3. Architecture:
-![Developers](https://user-images.githubusercontent.com/105864615/214238240-1cc1fbec-9075-4a9d-ab99-2624e477d58e.jpg)
+![Developers](https://user-images.githubusercontent.com/105864615/223118576-a47b2af4-c672-4105-aaa2-9a87f36173a7.jpg)
 - The pipeline will be triggered by a push to the `main` branch in GitHub.
 - The pipeline will include five stages: Terraform, Build & Test React Application, Build & Push Docker Image, Replace Build Id and Deploy.
 - Terraform will be used to provision an AKS cluster in Azure.
